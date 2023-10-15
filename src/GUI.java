@@ -255,15 +255,22 @@ public final class GUI extends JFrame implements ActionListener {
 
         JMenu menuEdit = new JMenu("Edit");
         JMenuItem resetPlayerEditMenu = new JMenuItem("Reset Players");
-        resetPlayerEditMenu.setToolTipText("Reset all player");
+        resetPlayerEditMenu.setToolTipText("Resets the statistics of all players.");
         resetPlayerEditMenu.setActionCommand("reset_players");
         resetPlayerEditMenu.addActionListener(this);
+
+        JMenuItem removePlayerEditMenu = new JMenuItem("Remove playe");
+        removePlayerEditMenu.setToolTipText("Remove player from the game");
+        removePlayerEditMenu.addActionListener(this);
 
         JMenuItem parametersEditMenu = new JMenuItem("Parameters");
         parametersEditMenu.setToolTipText("Modify the parameters of the game");
         parametersEditMenu.addActionListener(actionEvent -> logLine("Parameters: " + JOptionPane.showInputDialog(new Frame("Configure parameters"), "Enter parameters N,S,R,I,P")));
 
+
+
         menuEdit.add(resetPlayerEditMenu);
+        menuEdit.add(removePlayerEditMenu);
         menuEdit.add(parametersEditMenu);
         menuBar.add(menuEdit);
 
