@@ -1,15 +1,4 @@
 src/.DS_Store
-bin/APDescription.txt
-bin/GUI.class
-bin/GUI$LoggingOutputStream.class
-bin/MainAgent.class
-bin/MainAgent$GameManager.class
-bin/MainAgent$GameParametersStruct.class
-bin/MainAgent$PlayerInformation.class
-bin/MTPs-Main-Container.txt
-bin/RandomAgent.class
-bin/RandomAgent$Play.class
-bin/RandomAgent$State.class
+bin/*
 .vscode/settings.json
-bin/.DS_Store
 *.txt

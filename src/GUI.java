@@ -1,7 +1,11 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
@@ -9,12 +13,14 @@ import java.time.format.DateTimeFormatter;
 
 public final class GUI extends JFrame implements ActionListener {
     JLabel leftPanelRoundsLabel;
-    JLabel leftPanelExtraInformation;
+    JLabel parametros;
     JList<String> list;
     private MainAgent mainAgent;
     private JPanel rightPanel;
     private JTextArea rightPanelLoggingTextArea;
     private LoggingOutputStream loggingOutputStream;
+    DefaultTableModel model = new DefaultTableModel();
+
 
     public GUI() {
         initUI();
@@ -101,7 +107,7 @@ public final class GUI extends JFrame implements ActionListener {
         leftPanelContinueButton.addActionListener(this);
         // leftPanelContinueButton.addActionListener(actionEvent -> mainAgent.);
 
-        leftPanelExtraInformation = new JLabel("Parameters:");
+        parametros = new JLabel(mainAgent.getParametros());
 
         gc.fill = GridBagConstraints.HORIZONTAL;
         gc.anchor = GridBagConstraints.FIRST_LINE_START;
@@ -119,10 +125,11 @@ public final class GUI extends JFrame implements ActionListener {
         leftPanel.add(leftPanelContinueButton, gc);
         gc.gridy = 4;
         gc.weighty = 10;
-        leftPanel.add(leftPanelExtraInformation, gc);
+        leftPanel.add(parametros, gc);
 
         return leftPanel;
     }
+
 
     private JPanel createCentralPanel() {
         JPanel centralPanel = new JPanel(new GridBagLayout());
@@ -159,6 +166,20 @@ public final class GUI extends JFrame implements ActionListener {
         JButton updatePlayersButton = new JButton("Update players");
         updatePlayersButton.addActionListener(actionEvent -> mainAgent.updatePlayers());
 
+        JButton deletePlayerButton = new JButton("Delete player");
+        deletePlayerButton.addActionListener(
+            new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int[] indicesSeleccionados = list.getSelectedIndices();
+
+                for (int i = indicesSeleccionados.length - 1; i >= 0; i--) {
+                    // list.remove(indicesSeleccionados[i]);
+                    mainAgent.deletePlayer(indicesSeleccionados[i]);
+                }
+            }
+        }); 
+
         GridBagConstraints gc = new GridBagConstraints();
         gc.weightx = 0.5;
         gc.weighty = 0.5;
@@ -166,15 +187,21 @@ public final class GUI extends JFrame implements ActionListener {
 
         gc.gridx = 0;
         gc.gridy = 0;
-        gc.gridheight = 666;
+        gc.gridheight = 1; // Establece la altura de una celda (no 666)
         gc.fill = GridBagConstraints.BOTH;
         centralTopSubpanel.add(listScrollPane, gc);
+
         gc.gridx = 1;
         gc.gridheight = 1;
         gc.fill = GridBagConstraints.NONE;
         centralTopSubpanel.add(info1, gc);
+
         gc.gridy = 1;
+        gc.gridheight = 1; // Establece la altura de una celda (no 666)
         centralTopSubpanel.add(updatePlayersButton, gc);
+
+        gc.gridx = 2; // Cambia el índice de la columna para el botón de eliminar
+        centralTopSubpanel.add(deletePlayerButton, gc);
 
         return centralTopSubpanel;
     }
@@ -182,24 +209,11 @@ public final class GUI extends JFrame implements ActionListener {
     private JPanel createCentralBottomSubpanel() {
         JPanel centralBottomSubpanel = new JPanel(new GridBagLayout());
 
-        Object[] nullPointerWorkAround = {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"};
-
-        Object[][] data = {
-                {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"},
-                {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"},
-                {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"},
-                {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"},
-                {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"},
-                {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"},
-                {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"},
-                {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"},
-                {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"},
-                {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"},
-                {"*", "*", "*", "*", "*", "*", "*", "*", "*", "*"}
-        };
 
         JLabel payoffLabel = new JLabel("Player Results");
-        JTable payoffTable = new JTable(data, nullPointerWorkAround);
+        JTable payoffTable = new JTable(model);
+
+        
         payoffTable.setTableHeader(null);
         payoffTable.setEnabled(false);
         
@@ -261,7 +275,37 @@ public final class GUI extends JFrame implements ActionListener {
 
         JMenuItem removePlayerEditMenu = new JMenuItem("Remove playe");
         removePlayerEditMenu.setToolTipText("Remove player from the game");
-        removePlayerEditMenu.addActionListener(this);
+        removePlayerEditMenu.addActionListener(
+        new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFrame frame = new JFrame("ListaBotonEliminarDemo");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                JPanel panel = new JPanel();
+
+                JScrollPane scrollPane = new JScrollPane(list);
+                panel.add(scrollPane);
+
+                JButton eliminarButton = new JButton("Eliminar");
+                panel.add(eliminarButton);
+
+                eliminarButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        int[] indicesSeleccionados = list.getSelectedIndices();
+                        for (int i = indicesSeleccionados.length - 1; i >= 0; i--) {
+                            list.remove(indicesSeleccionados[i]);
+                        }
+                    }
+                });
+
+                frame.getContentPane().add(panel);
+                frame.setSize(300, 200);
+                frame.setVisible(true);
+            }
+        });
+
+        
 
         JMenuItem parametersEditMenu = new JMenuItem("Parameters");
         parametersEditMenu.setToolTipText("Modify the parameters of the game");
@@ -290,7 +334,7 @@ public final class GUI extends JFrame implements ActionListener {
 
         JMenuItem roundNumberRunMenu = new JMenuItem("Number of rounds");
         roundNumberRunMenu.setToolTipText("Change the number of rounds");
-        roundNumberRunMenu.addActionListener(actionEvent -> logLine(JOptionPane.showInputDialog(new Frame("Configure rounds"), "How many rounds?") + " rounds"));
+        roundNumberRunMenu.addActionListener(actionEvent -> actualizarRounds());
 
         menuRun.add(newRunMenu);
         menuRun.add(stopRunMenu);
@@ -308,6 +352,8 @@ public final class GUI extends JFrame implements ActionListener {
 
         return menuBar;
     }
+
+    
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -333,4 +379,15 @@ public final class GUI extends JFrame implements ActionListener {
             textArea.setCaretPosition(textArea.getDocument().getLength());
         }
     }
+
+    public void actualizarRounds(){
+        mainAgent.setNumberRounds(JOptionPane.showInputDialog(new Frame("Configure rounds"), "How many rounds?"));
+        this.actualizarParametros();
+    }
+
+    public void actualizarParametros(){
+        this.parametros.setText(mainAgent.getParametros());
+    }
+
+    
 }
