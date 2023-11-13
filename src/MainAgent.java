@@ -18,10 +18,8 @@ public class MainAgent extends Agent {
     private GUI gui;
     private AID[] playerAgents;
     private GameParametersStruct parameters = new GameParametersStruct();
-   
-
-    
-    
+    Thread gameThread;
+    private boolean stop;
 
     public Results getResult_Results(String action1, String action2){
         System.out.println(action1 + " , " + action2);
@@ -104,6 +102,16 @@ public class MainAgent extends Agent {
         return 0;
     }
 
+    public void continuar(){
+        stop = false;
+        synchronized (gameThread) {
+            gameThread.notify(); // Notifica al hilo gameThread para que se reanude
+        }
+    }
+
+    public void stop(){
+        stop = true;
+    }
     /**
      * In this behavior this agent manages the course of a match during all the
      * rounds.
@@ -118,7 +126,7 @@ public class MainAgent extends Agent {
             for (AID a : playerAgents) {
                 players.add(new PlayerInformation(a, lastId++));
             }
-
+            
             // Enviamos la informacion de su id a cada agente
             for (PlayerInformation player : players) {
                 ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
@@ -127,22 +135,44 @@ public class MainAgent extends Agent {
                 send(msg);
             }
 
-            // Organize the matches
-            Object[] resultados_tabla = new Object[players.size()];
+            gameThread = new Thread(() -> {
+                    // Organize the matches
+                Object[] resultados_tabla = new Object[players.size()];
 
-            for (int i = 0; i < players.size(); i++) {
-                resultados_tabla[i] = 0; // O el valor inicial adecuado
-            }
-
-            for (int i = 0; i < players.size(); i++) {
-                for (int j = i + 1; j < players.size(); j++) { //too lazy to think, let's see if it works or it breaks
-                    Results resultados = playGame(players.get(i), players.get(j));
-                    resultados_tabla[i] = (int)resultados_tabla[i] + resultados.player1;
-                    resultados_tabla[j] = (int)resultados_tabla[j] + resultados.player2;
+                for (int i = 0; i < players.size(); i++) {
+                    resultados_tabla[i] = 0; // Inicializa el valor de resultados_tabla
                 }
-            }
-            System.out.println("Hola \n\n");
-            gui.model.addRow(resultados_tabla);
+                
+                for (int i = 0; i < players.size(); i++) {
+                    for (int j = i + 1; j < players.size(); j++) { //too lazy to think, let's see if it works or it breaks
+                        // // Para debugear    
+                        // try {
+                        //     Thread.sleep(1000);
+                        // } catch (Exception e) {
+                        // }
+                        if (stop){
+                            synchronized (gameThread) {
+                                try {
+                                        
+                                        System.out.println("\n\n\nEl juego está PAUSADO.\n\n\n");
+                                        gameThread.wait();
+                                        System.out.println("\n\n\nEl juego está REANUDADO.\n\n\n");
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                        }
+                        Results resultados = playGame(players.get(i), players.get(j));
+                        resultados_tabla[i] = (int)resultados_tabla[i] + resultados.player1;
+                        resultados_tabla[j] = (int)resultados_tabla[j] + resultados.player2;
+                    }
+                }
+                gui.model.addRow(resultados_tabla);
+            });
+    
+            gameThread.start();
+
+            
         }
 
         private Results playGame(PlayerInformation player1, PlayerInformation player2) {
@@ -166,7 +196,6 @@ public class MainAgent extends Agent {
                 send(msg);
 
                 // Recivimos el mensaje de accion de uno de los jugadores
-                gui.logLine("Main Waiting for movement");
                 ACLMessage move1 = blockingReceive();
                 gui.logLine("Main Received " + move1.getContent() + " from " + move1.getSender().getName());
                 action1 = (move1.getContent().split("#")[1]);
@@ -178,7 +207,6 @@ public class MainAgent extends Agent {
                 send(msg);
 
                 // Recivimos el mensaje de accion de uno de los jugadores
-                gui.logLine("Main Waiting for movement");
                 ACLMessage move2 = blockingReceive();
                 gui.logLine("Main Received " + move2.getContent() + " from " + move2.getSender().getName());
                 action2 = (move2.getContent().split("#")[1]);
@@ -277,15 +305,23 @@ public class MainAgent extends Agent {
 
         public GameParametersStruct() {
             N = 0;
-            R = 4;
+            R = 20;
         }
         public String getParametros() {
             return String.format("<html>Parameters:<br> Nº Players: %d <br>Rounds:%d </html>", N, R);
+        }
+
+        public String getR(){
+            return String.format("%d", R);
         }
     }
 
     public String getParametros(){
         return this.parameters.getParametros();
+    }
+
+    public String getR(){
+        return this.parameters.getR();
     }
 
     public void updatePrametres(){
@@ -306,11 +342,11 @@ public class MainAgent extends Agent {
         AID aidToRemove = playerAgents[indice];
 
         AID[] newPlayerAgents = new AID[playerAgents.length - 1];
+        
         int newIndex = 0;
         for (AID aid : playerAgents) {
             if (!aid.equals(aidToRemove)) {
                 newPlayerAgents[newIndex] = aid;
-                
                 newIndex++;
             }
         }

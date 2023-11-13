@@ -21,7 +21,6 @@ public final class GUI extends JFrame implements ActionListener {
     private LoggingOutputStream loggingOutputStream;
     DefaultTableModel model = new DefaultTableModel();
 
-
     public GUI() {
         initUI();
     }
@@ -57,7 +56,7 @@ public final class GUI extends JFrame implements ActionListener {
     }
 
     public void initUI() {
-        setTitle("GUI");
+        setTitle("Hawk and dove");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(600, 400));
         setPreferredSize(new Dimension(1000, 600));
@@ -65,6 +64,10 @@ public final class GUI extends JFrame implements ActionListener {
         setContentPane(createMainContentPane());
         pack();
         setVisible(true);
+
+        Image icon = new ImageIcon(getClass().getResource("img/icon.png")).getImage();
+        setIconImage(icon);
+        
     }
 
     private Container createMainContentPane() {
@@ -98,13 +101,14 @@ public final class GUI extends JFrame implements ActionListener {
         leftPanel.setLayout(new GridBagLayout());
         GridBagConstraints gc = new GridBagConstraints();
 
-        leftPanelRoundsLabel = new JLabel("Round 0 / null");
+        leftPanelRoundsLabel = new JLabel("Round 0 /" + mainAgent.getR());
+
         JButton leftPanelNewButton = new JButton("New");
         leftPanelNewButton.addActionListener(actionEvent -> mainAgent.newGame());
         JButton leftPanelStopButton = new JButton("Stop");
-        leftPanelStopButton.addActionListener(this);
+        leftPanelStopButton.addActionListener(actionEvent -> mainAgent.stop());
         JButton leftPanelContinueButton = new JButton("Continue");
-        leftPanelContinueButton.addActionListener(this);
+        leftPanelContinueButton.addActionListener(actionEvent -> mainAgent.continuar());
         // leftPanelContinueButton.addActionListener(actionEvent -> mainAgent.);
 
         parametros = new JLabel(mainAgent.getParametros());
@@ -276,34 +280,17 @@ public final class GUI extends JFrame implements ActionListener {
         JMenuItem removePlayerEditMenu = new JMenuItem("Remove playe");
         removePlayerEditMenu.setToolTipText("Remove player from the game");
         removePlayerEditMenu.addActionListener(
-        new ActionListener() {
+            new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JFrame frame = new JFrame("ListaBotonEliminarDemo");
-                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                JPanel panel = new JPanel();
+                int[] indicesSeleccionados = list.getSelectedIndices();
 
-                JScrollPane scrollPane = new JScrollPane(list);
-                panel.add(scrollPane);
-
-                JButton eliminarButton = new JButton("Eliminar");
-                panel.add(eliminarButton);
-
-                eliminarButton.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        int[] indicesSeleccionados = list.getSelectedIndices();
-                        for (int i = indicesSeleccionados.length - 1; i >= 0; i--) {
-                            list.remove(indicesSeleccionados[i]);
-                        }
-                    }
-                });
-
-                frame.getContentPane().add(panel);
-                frame.setSize(300, 200);
-                frame.setVisible(true);
+                for (int i = indicesSeleccionados.length - 1; i >= 0; i--) {
+                    // list.remove(indicesSeleccionados[i]);
+                    mainAgent.deletePlayer(indicesSeleccionados[i]);
+                }
             }
-        });
+        }); 
 
         
 
@@ -387,6 +374,7 @@ public final class GUI extends JFrame implements ActionListener {
 
     public void actualizarParametros(){
         this.parametros.setText(mainAgent.getParametros());
+        this.leftPanelRoundsLabel.setText("Round 0 /" + mainAgent.getR());
     }
 
     

@@ -15,7 +15,6 @@ public class RandomAgent extends Agent {
     private AID mainAgent;
     private int myId, opponentId;
     private int N; // Numero de jugadores
-            
     
     private ACLMessage msg;
 
