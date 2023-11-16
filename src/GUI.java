@@ -304,15 +304,15 @@ public final class GUI extends JFrame implements ActionListener {
 
         JMenuItem newRunMenu = new JMenuItem("New");
         newRunMenu.setToolTipText("Starts a new series of games");
-        newRunMenu.addActionListener(this);
+        newRunMenu.addActionListener(actionEvent -> mainAgent.newGame());
 
         JMenuItem stopRunMenu = new JMenuItem("Stop");
         stopRunMenu.setToolTipText("Stops the execution of the current round");
-        stopRunMenu.addActionListener(this);
+        stopRunMenu.addActionListener(actionEvent -> mainAgent.stop());
 
         JMenuItem continueRunMenu = new JMenuItem("Continue");
         continueRunMenu.setToolTipText("Resume the execution");
-        continueRunMenu.addActionListener(this);
+        continueRunMenu.addActionListener(actionEvent -> mainAgent.continuar());
 
         JMenuItem roundNumberRunMenu = new JMenuItem("Number of rounds");
         roundNumberRunMenu.setToolTipText("Change the number of rounds");

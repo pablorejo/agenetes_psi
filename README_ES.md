@@ -1,3 +1,6 @@
+# Pasos generales 
+Poner el fichero jade.jar a la carpeta lib.
+
 # Como ejecutar
 This is a set of basic commands to compile and execute the code:
 
@@ -11,8 +14,7 @@ This is a set of basic commands to compile and execute the code:
     ```
 
 # Ejecución rápida
-## Pasos generales 
-    Poner el fichero jade.jar a la carpeta lib.
+
 ## Linux & Mac:
 Para hacerlo de manera sencilla está el programa ejecutar.sh  
 Damos permisos para la ejecución:
@@ -33,5 +35,3 @@ Ejecutamos el programa que compilara y lanzará la aplicación.
 ./ejecutar.sh
 ```
 Podemos cambiar el fichero para que se ejecuten los agentes que deseemos.
-
-**Note** that you need to have the **"jade.jar"** library in the present folder

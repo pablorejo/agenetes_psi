@@ -1,4 +1,5 @@
 src/.DS_Store
 bin/*.class
 .vscode/settings.json
-*.txt
+APDescription.txt
+MTPs-Main-Container.txt
