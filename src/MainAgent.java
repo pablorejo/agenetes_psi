@@ -11,6 +11,7 @@ import jade.lang.acl.ACLMessage;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 public class MainAgent extends Agent {
@@ -78,17 +79,18 @@ public class MainAgent extends Agent {
 
         gui.model.setColumnCount(0);
         gui.model.setRowCount(0);
+
+        int[] ancho = new int[playerAgents.length];
         for (int i = 0; i < playerAgents.length; i++) {
             playerNames[i] = playerAgents[i].getName();
             String nombre = playerAgents[i].getName().split("@")[0];
-
+            ancho[i] = nombre.length();
             gui.model.addColumn(nombre);
-            if (gui.model.getRowCount() == 0)
-            {
-                gui.model.addRow(playerNames);
-            }
-            gui.model.setValueAt(nombre, 0, i);
-            
+        }
+
+        // Establecer el ancho preferido después de agregar todas las columnas
+        for (int i = 0; i < playerAgents.length; i++) {
+            gui.payoffTable.getColumnModel().getColumn(i).setPreferredWidth(ancho[i]*9);
         }
 
         gui.setPlayersUI(playerNames);
@@ -143,17 +145,17 @@ public class MainAgent extends Agent {
                     resultados_tabla[i] = 0; // Inicializa el valor de resultados_tabla
                 }
                 
-                for (int i = 0; i < players.size(); i++) {
-                    for (int j = i + 1; j < players.size(); j++) { //too lazy to think, let's see if it works or it breaks
-                        // // Para debugear    
-                        // try {
-                        //     Thread.sleep(1000);
-                        // } catch (Exception e) {
-                        // }
-                        if (stop){
-                            synchronized (gameThread) {
-                                try {
-                                        
+                for (int k = 1; k <= parameters.R; k++){
+                    for (int i = 0; i < players.size(); i++) {
+                        for (int j = i + 1; j < players.size(); j++) { //too lazy to think, let's see if it works or it breaks
+                            try {
+                                // Para que dea tiempo a pulsar el boton de stop
+                                Thread.sleep(150);
+                            } catch (Exception e) {
+                            }
+                            if (stop){
+                                synchronized (gameThread) {
+                                    try {
                                         System.out.println("\n\n\nEl juego está PAUSADO.\n\n\n");
                                         gameThread.wait();
                                         System.out.println("\n\n\nEl juego está REANUDADO.\n\n\n");
@@ -161,75 +163,83 @@ public class MainAgent extends Agent {
                                         e.printStackTrace();
                                     }
                                 }
+                            }
+
+                            Results resultados = null;
+                            if (k == parameters.R){
+                                resultados = playGame(players.get(i), players.get(j), true);
+                            }else{
+                                resultados = playGame(players.get(i), players.get(j), false);
+                            }
+                            resultados_tabla[i] = (int)resultados_tabla[i] + resultados.player1;
+                            resultados_tabla[j] = (int)resultados_tabla[j] + resultados.player2;
                         }
-                        Results resultados = playGame(players.get(i), players.get(j));
-                        resultados_tabla[i] = (int)resultados_tabla[i] + resultados.player1;
-                        resultados_tabla[j] = (int)resultados_tabla[j] + resultados.player2;
                     }
+                    gui.leftPanelRoundsLabel.setText("Round "+k+" /" + parameters.R);
                 }
+                gui.actualizarParametros();
                 gui.model.addRow(resultados_tabla);
             });
-    
             gameThread.start();
 
             
         }
 
-        private Results playGame(PlayerInformation player1, PlayerInformation player2) {
+        private Results playGame(PlayerInformation player1, PlayerInformation player2, boolean fin) {
             int player1_value = 0;
             int player2_value = 0;
             ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 
-            for (int i = 0; i < parameters.R; i++){
-                //Empezamos enviado el mensaje de NewGame a ambos jugadores.
-                msg.addReceiver(player1.aid);
-                msg.addReceiver(player2.aid);
-                msg.setContent("NewGame#" + player1.id + "," + player2.id);
-                send(msg);
-
-                String action1, action2;
-
-                //Enviamos el mensaje de accion a uno de los jugadores
-                msg = new ACLMessage(ACLMessage.REQUEST);
-                msg.setContent("Action");
-                msg.addReceiver(player1.aid);
-                send(msg);
-
-                // Recivimos el mensaje de accion de uno de los jugadores
-                ACLMessage move1 = blockingReceive();
-                gui.logLine("Main Received " + move1.getContent() + " from " + move1.getSender().getName());
-                action1 = (move1.getContent().split("#")[1]);
-
-                //Enviamos el mensaje de accion a uno de los jugadores
-                msg = new ACLMessage(ACLMessage.REQUEST);
-                msg.setContent("Action");
-                msg.addReceiver(player2.aid);
-                send(msg);
-
-                // Recivimos el mensaje de accion de uno de los jugadores
-                ACLMessage move2 = blockingReceive();
-                gui.logLine("Main Received " + move2.getContent() + " from " + move2.getSender().getName());
-                action2 = (move2.getContent().split("#")[1]);
-
-                // Enviamos los resultados
-                msg = new ACLMessage(ACLMessage.INFORM);
-                msg.addReceiver(player1.aid);
-                msg.addReceiver(player2.aid);
-
-                Results resultados = new Results(0,0);
-                resultados.setResults(action1, action2);
-
-                msg.setContent("Results#" + player1.id + "," + player2.id + "#" +action1 + "," + action2 + resultados.toString());
-                player1_value += resultados.player1;
-                player2_value += resultados.player2;
-
-                send(msg);
-               
-            }
-
-            // Terminamos el juego.
-            msg.setContent("GameOver#" + player1.id + "," + player2.id + "#" + player1_value + "," + player2_value);
+            //Empezamos enviado el mensaje de NewGame a ambos jugadores.
+            msg.addReceiver(player1.aid);
+            msg.addReceiver(player2.aid);
+            msg.setContent("NewGame#" + player1.id + "," + player2.id);
             send(msg);
+
+            String action1, action2;
+
+            //Enviamos el mensaje de accion a uno de los jugadores
+            msg = new ACLMessage(ACLMessage.REQUEST);
+            msg.setContent("Action");
+            msg.addReceiver(player1.aid);
+            send(msg);
+
+            // Recivimos el mensaje de accion de uno de los jugadores
+            ACLMessage move1 = blockingReceive();
+            gui.logLine("Main Received " + move1.getContent() + " from " + move1.getSender().getName());
+            action1 = (move1.getContent().split("#")[1]);
+
+            //Enviamos el mensaje de accion a uno de los jugadores
+            msg = new ACLMessage(ACLMessage.REQUEST);
+            msg.setContent("Action");
+            msg.addReceiver(player2.aid);
+            send(msg);
+
+            // Recivimos el mensaje de accion de uno de los jugadores
+            ACLMessage move2 = blockingReceive();
+            gui.logLine("Main Received " + move2.getContent() + " from " + move2.getSender().getName());
+            action2 = (move2.getContent().split("#")[1]);
+
+            // Enviamos los resultados
+            msg = new ACLMessage(ACLMessage.INFORM);
+            msg.addReceiver(player1.aid);
+            msg.addReceiver(player2.aid);
+
+            Results resultados = new Results(0,0);
+            resultados.setResults(action1, action2);
+
+            msg.setContent("Results#" + player1.id + "," + player2.id + "#" +action1 + "," + action2 + resultados.toString());
+            player1_value += resultados.player1;
+            player2_value += resultados.player2;
+
+            send(msg);
+               
+
+            if (fin){
+                // Terminamos el juego.
+                msg.setContent("GameOver#" + player1.id + "," + player2.id + "#" + player1_value + "," + player2_value);
+                send(msg);
+            }
 
             return new Results(player1_value, player2_value);
 
@@ -359,17 +369,20 @@ public class MainAgent extends Agent {
         String[] playerNames = new String[playerAgents.length];
         gui.model.setColumnCount(0);
         gui.model.setRowCount(0);
+        
+        int[] ancho = new int[playerAgents.length];
         for (int i = 0; i < playerAgents.length; i++) {
             playerNames[i] = playerAgents[i].getName();
-
             String nombre = playerAgents[i].getName().split("@")[0];
+            ancho[i] = nombre.length();
             gui.model.addColumn(nombre);
-            if (gui.model.getRowCount() == 0)
-            {
-                gui.model.addRow(playerNames);
-            }
-            gui.model.setValueAt(nombre, 0, i);
         }
+
+        // Establecer el ancho preferido después de agregar todas las columnas
+        for (int i = 0; i < playerAgents.length; i++) {
+            gui.payoffTable.getColumnModel().getColumn(i).setPreferredWidth(ancho[i]*9);
+        }
+
         gui.setPlayersUI(playerNames);
         System.out.println("Player " + aidToRemove.getName() + " delete.");
         this.updatePrametres();

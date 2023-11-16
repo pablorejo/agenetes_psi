@@ -1,5 +1,7 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -19,8 +21,13 @@ public final class GUI extends JFrame implements ActionListener {
     private JPanel rightPanel;
     private JTextArea rightPanelLoggingTextArea;
     private LoggingOutputStream loggingOutputStream;
-    DefaultTableModel model = new DefaultTableModel();
-
+    DefaultTableModel model = new DefaultTableModel(){
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
+    JTable payoffTable = new JTable(model);
     public GUI() {
         initUI();
     }
@@ -211,32 +218,20 @@ public final class GUI extends JFrame implements ActionListener {
     }
 
     private JPanel createCentralBottomSubpanel() {
-        JPanel centralBottomSubpanel = new JPanel(new GridBagLayout());
-
-
+        JPanel centralBottomSubpanel = new JPanel(new BorderLayout());
+    
         JLabel payoffLabel = new JLabel("Player Results");
-        JTable payoffTable = new JTable(model);
-
+        payoffTable = new JTable(model);
+    
+        // payoffTable.setTableHeader(null);
+        payoffTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         
-        payoffTable.setTableHeader(null);
-        payoffTable.setEnabled(false);
-        
+        // Crear JScrollPane sin barras de desplazamiento horizontales y verticales
         JScrollPane player1ScrollPane = new JScrollPane(payoffTable);
-
-        GridBagConstraints gc = new GridBagConstraints();
-        gc.weightx = 0.5;
-        gc.fill = GridBagConstraints.BOTH;
-        gc.anchor = GridBagConstraints.FIRST_LINE_START;
-
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.weighty = 0.5;
-        centralBottomSubpanel.add(payoffLabel, gc);
-        gc.gridy = 1;
-        gc.gridx = 0;
-        gc.weighty = 2;
-        centralBottomSubpanel.add(player1ScrollPane, gc);
-
+    
+        centralBottomSubpanel.add(payoffLabel, BorderLayout.NORTH);
+        centralBottomSubpanel.add(player1ScrollPane, BorderLayout.CENTER);
+        
         return centralBottomSubpanel;
     }
 
@@ -375,7 +370,5 @@ public final class GUI extends JFrame implements ActionListener {
     public void actualizarParametros(){
         this.parametros.setText(mainAgent.getParametros());
         this.leftPanelRoundsLabel.setText("Round 0 /" + mainAgent.getR());
-    }
-
-    
+    }    
 }
