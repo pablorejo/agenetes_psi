@@ -1,3 +1,4 @@
+package agents;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -9,12 +10,13 @@ import jade.lang.acl.ACLMessage;
 
 import java.util.Random;
 
-public class RandomAgent extends Agent {
+public class Deterministic_D_Agent extends Agent {
 
     private State state;
     private AID mainAgent;
     private int myId, opponentId;
     private int N; // Numero de jugadores
+            
     
     private ACLMessage msg;
 
@@ -57,7 +59,6 @@ public class RandomAgent extends Agent {
     }
 
     private class Play extends CyclicBehaviour {
-        Random random = new Random();
         @Override
         public void action() {
             System.out.println(getAID().getName() + ":" + state.name());
@@ -115,14 +116,9 @@ public class RandomAgent extends Agent {
                             // Enviamos la accion al agente principal
                             ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
                             
-                            // Generar un número aleatorio entre 0 y 1
-                            int randomNumber = random.nextInt(2);
-                            
-                            // Usar el número aleatorio para elegir entre "D" y "H"
-                            String choice = (randomNumber == 0) ? "D" : "H";
                             
                             msg.addReceiver(mainAgent);
-                            msg.setContent("Action#" + choice);
+                            msg.setContent("Action#D" );
                             System.out.println(getAID().getName() + " sent " + msg.getContent());
                             send(msg);
                             state = State.s3AwaitingResult;

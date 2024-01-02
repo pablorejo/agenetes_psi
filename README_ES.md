@@ -28,7 +28,7 @@ Y ejecutamos el programa que compilara y lanzará la aplicación.
 ```
 Podemos cambiar el fichero para que se ejecuten los agentes que deseemos.
 
-## Windows (do not use the PowerShell):
+## Windows (no usar powershell):
 Para hacerlo de manera sencilla está el programa ejecutar.bat  
 Ejecutamos el programa que compilara y lanzará la aplicación.
 ```bash
